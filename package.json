@@ -1,6 +1,6 @@
 {
   "name": "@flit/sveltekit-adapter-pdf-gen-cdk",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "This SvelteKit adapter generates a CDK construct for a PDF generation service",
   "keywords": [
     "aws",
@@ -30,7 +30,7 @@
   "types": "./dist/index.d.ts",
   "files": [
     "./dist",
-    "./src",
+    "./puppeteer-layer.zip",
     "./LICENSE.txt",
     "./README.md"
   ],
