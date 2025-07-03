@@ -6,10 +6,16 @@ import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import http from "node:http";
 
 const BROWSER = await puppeteer.launch({
-  args: chromium.args,
-  defaultViewport: chromium.defaultViewport,
+  args: puppeteer.defaultArgs({ args: chromium.args, headless: "shell" }),
+  defaultViewport: {
+    width: 800,
+    height: 0,
+    hasTouch: false,
+    isLandscape: false,
+    isMobile: false,
+  },
   executablePath: await chromium.executablePath(),
-  headless: chromium.headless,
+  headless: "shell",
 });
 
 const S3 = new S3Client();
@@ -21,10 +27,6 @@ export const handler: Handler = async (event) => {
   url.searchParams.append("data", JSON.stringify(event.data));
 
   const page = await BROWSER.newPage();
-  page.setViewport({
-    width: 800,
-    height: 0,
-  });
   await page.goto(url.href, {
     waitUntil: ["load", "networkidle0"],
   });
