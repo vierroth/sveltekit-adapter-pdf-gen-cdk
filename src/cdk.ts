@@ -47,6 +47,7 @@ export class PdfService extends Construct implements IFunction {
   readonly addEventSource: any;
   readonly configureAsyncInvoke: any;
   readonly addFunctionUrl: any;
+  readonly functionRef: any;
 
   constructor(scope: Construct, id: string, props: PdfServiceProps) {
     super(scope, id);
@@ -119,5 +120,6 @@ export class PdfService extends Construct implements IFunction {
     this.addEventSource = lambda.addEventSource;
     this.configureAsyncInvoke = lambda.configureAsyncInvoke;
     this.addFunctionUrl = lambda.addFunctionUrl;
+    this.functionRef = lambda.functionRef;
   }
 }
