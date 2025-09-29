@@ -71,12 +71,17 @@ export class PdfService extends Construct implements IFunction {
       bundling: {
         minify: true,
         sourcesContent: false,
+        loader: {
+          ".node": "file",
+        },
+        target: "esnext",
         format: OutputFormat.ESM,
         mainFields: ["module", "main"],
-        target: "esnext",
         esbuildArgs: {
           "--conditions": "module",
         },
+        banner:
+          'import { createRequire } from "module"; global.require = createRequire(import.meta.url);',
         commandHooks: {
           afterBundling: (_: string, outputDir: string): string[] => [
             `cp -r ${fileURLToPath(
@@ -88,7 +93,7 @@ export class PdfService extends Construct implements IFunction {
           beforeBundling: () => [],
           beforeInstall: () => [],
         },
-        externalModules: ["@sparticuz", "puppeteer-core"],
+        externalModules: ["@sparticuz/chromium", "puppeteer-core"],
       },
     });
 
