@@ -6,7 +6,7 @@ import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import http from "node:http";
 
 const BROWSER = await puppeteer.launch({
-  args: puppeteer.defaultArgs({ args: chromium.args, headless: "shell" }),
+  args: await puppeteer.defaultArgs({ args: chromium.args, headless: "shell" }),
   defaultViewport: {
     width: 800,
     height: 0,

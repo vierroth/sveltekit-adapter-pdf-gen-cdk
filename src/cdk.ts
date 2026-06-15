@@ -11,6 +11,7 @@ import { fileURLToPath } from "url";
 import { Duration } from "aws-cdk-lib";
 import { RetentionDays } from "aws-cdk-lib/aws-logs";
 import { IPrincipal } from "aws-cdk-lib/aws-iam";
+import { join } from "path";
 
 export interface PdfServiceProps {
   timeout: Duration;
@@ -52,22 +53,23 @@ export class PdfService extends Construct implements IFunction {
   constructor(scope: Construct, id: string, props: PdfServiceProps) {
     super(scope, id);
 
+    const basePath = fileURLToPath(new URL(".", import.meta.url));
+
     const puppeteerLayer = new LayerVersion(this, "PuppeteerLayer", {
-      code: Code.fromAsset(
-        fileURLToPath(new URL("./puppeteer-layer.zip", import.meta.url).href),
-      ),
+      code: Code.fromAsset(join(basePath, "puppeteer-layer.zip")),
       compatibleArchitectures: [Architecture.X86_64],
     });
 
     const lambda = new NodejsFunction(this, "Server", {
       ...props,
-      architecture: Architecture.X86_64,
+      architecture: Architecture.ARM_64,
       runtime: Runtime.NODEJS_22_X,
-      memorySize: 1024,
-      entry: fileURLToPath(
-        new URL("./handler/lambda.js", import.meta.url).href,
-      ),
+      memorySize: 1770,
+
+      entry: join(basePath, "handler/lambda.js"),
+
       layers: [puppeteerLayer],
+
       bundling: {
         minify: true,
         sourcesContent: false,
@@ -82,17 +84,6 @@ export class PdfService extends Construct implements IFunction {
         },
         banner:
           'import { createRequire } from "module"; global.require = createRequire(import.meta.url);',
-        commandHooks: {
-          afterBundling: (_: string, outputDir: string): string[] => [
-            `cp -r ${fileURLToPath(
-              new URL("./handler/server", import.meta.url).href,
-            )} ${outputDir}/server && cp -r ${fileURLToPath(
-              new URL("./handler/client", import.meta.url).href,
-            )} ${outputDir}/client`,
-          ],
-          beforeBundling: () => [],
-          beforeInstall: () => [],
-        },
         externalModules: ["@sparticuz/chromium", "puppeteer-core"],
       },
     });
