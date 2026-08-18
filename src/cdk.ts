@@ -62,8 +62,8 @@ export class PdfService extends Construct implements IFunction {
 
     const lambda = new NodejsFunction(this, "Server", {
       ...props,
-      architecture: Architecture.ARM_64,
-      runtime: Runtime.NODEJS_22_X,
+      architecture: Architecture.X86_64,
+      runtime: Runtime.NODEJS_24_X,
       memorySize: 1770,
 
       entry: join(basePath, "handler/lambda.js"),
