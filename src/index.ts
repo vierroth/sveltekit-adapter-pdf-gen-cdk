@@ -12,6 +12,7 @@ export default function (props?: AdapterProps) {
 
   const nodeAdapter = adapterNode({
     out: join(out, "handler"),
+    precompress: false,
   });
 
   return {
@@ -22,7 +23,7 @@ export default function (props?: AdapterProps) {
       builder.mkdirp(tmp);
       builder.rimraf(out);
 
-      nodeAdapter.adapt(builder);
+      await nodeAdapter.adapt(builder);
 
       builder.writeServer(`${tmp}/server`);
 
