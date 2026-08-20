@@ -65,11 +65,8 @@ export class PdfService extends Construct implements IFunction {
       architecture: Architecture.X86_64,
       runtime: Runtime.NODEJS_24_X,
       memorySize: 1770,
-
       entry: join(basePath, "handler/lambda.js"),
-
       layers: [puppeteerLayer],
-
       bundling: {
         minify: true,
         sourcesContent: false,
@@ -85,6 +82,23 @@ export class PdfService extends Construct implements IFunction {
         banner:
           'import { createRequire } from "module"; global.require = createRequire(import.meta.url);',
         externalModules: ["@sparticuz/chromium", "puppeteer-core"],
+        commandHooks: {
+          beforeBundling() {
+            return [];
+          },
+          beforeInstall() {
+            return [];
+          },
+          afterBundling(_inputDir, outputDir) {
+            return [
+              `test -d "${join(basePath, "handler/client")}"`,
+              `cp -R "${join(
+                basePath,
+                "handler/client",
+              )}" "${outputDir}/client"`,
+            ];
+          },
+        },
       },
     });
 

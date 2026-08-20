@@ -4,6 +4,9 @@ import chromium from "@sparticuz/chromium";
 import puppeteer from "puppeteer-core";
 import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import http from "node:http";
+import { readFile } from "node:fs/promises";
+import { extname, resolve, sep } from "node:path";
+import { fileURLToPath } from "node:url";
 
 const BROWSER = await puppeteer.launch({
   args: await puppeteer.defaultArgs({ args: chromium.args, headless: "shell" }),
@@ -20,11 +23,57 @@ const BROWSER = await puppeteer.launch({
 });
 
 const S3 = new S3Client();
+const clientDirectory = resolve(
+  fileURLToPath(new URL("./client/", import.meta.url)),
+);
 
-await new Promise<void>((resolve, reject) => {
-  const server = http.createServer(kitHandler);
+await new Promise<void>((resolveServer, reject) => {
+  const server = http.createServer(async (request, response) => {
+    const pathname = decodeURIComponent(
+      new URL(request.url ?? "/", "http://127.0.0.1").pathname,
+    );
+    const filePath = resolve(clientDirectory, `.${pathname}`);
+
+    if (
+      (request.method === "GET" || request.method === "HEAD") &&
+      filePath.startsWith(`${clientDirectory}${sep}`)
+    ) {
+      try {
+        const body = await readFile(filePath);
+
+        response.writeHead(200, {
+          "Content-Type":
+            {
+              ".css": "text/css",
+              ".js": "text/javascript",
+              ".svg": "image/svg+xml",
+              ".png": "image/png",
+              ".jpg": "image/jpeg",
+              ".jpeg": "image/jpeg",
+              ".webp": "image/webp",
+              ".woff": "font/woff",
+              ".woff2": "font/woff2",
+            }[extname(filePath).toLowerCase()] ?? "application/octet-stream",
+          "Content-Length": body.length,
+        });
+
+        response.end(request.method === "HEAD" ? undefined : body);
+        return;
+      } catch (error) {
+        console.error("Static asset not found", {
+          pathname,
+          filePath,
+          clientDirectory,
+          error,
+        });
+      }
+    }
+
+    kitHandler(request, response);
+  });
+
   server.once("error", reject);
-  server.listen(8000, "127.0.0.1", () => resolve());
+  server.listen(8000, "127.0.0.1", resolveServer);
 });
 
 export const handler: Handler = async (event) => {
@@ -46,27 +95,6 @@ export const handler: Handler = async (event) => {
         }`,
       );
     }
-
-    page.on("console", (message) => {
-      console.log(`[browser:${message.type()}] ${message.text()}`);
-    });
-
-    page.on("pageerror", (error) => {
-      console.error("[browser:pageerror]", error);
-    });
-
-    page.on("requestfailed", (request) => {
-      console.error("[browser:requestfailed]", {
-        url: request.url(),
-        error: request.failure()?.errorText,
-      });
-    });
-
-    page.on("response", (response) => {
-      if (response.status() >= 400) {
-        console.error("[browser:http]", response.status(), response.url());
-      }
-    });
 
     await new Promise((resolve) => setTimeout(resolve, 1000));
     await page.bringToFront();
